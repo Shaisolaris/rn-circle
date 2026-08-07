@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
+
+# Allow the workflow to push the built site to the gh-pages branch.
+permissions:
+  contents: write
 
 jobs:
   build:
+    name: Test, type-check, and deploy web preview
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,20 +26,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
+      - name: Type-check
         run: npm run typecheck
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm test -- --ci
 
-      - name: Export web build
-        env:
-          EXPO_BASE_PATH: /rn-circle
+      - name: Export static web build
         run: npx expo export --platform web
+        env:
+          # Site is served from https://shaisolaris.github.io/rn-circle/,
+          # so every asset URL needs this prefix baked in at export time.
+          EXPO_BASE_PATH: /rn-circle
+          EXPO_OFFLINE: 1
 
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          publish_branch: gh-pages
