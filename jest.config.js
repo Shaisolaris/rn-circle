@@ -1,0 +1,6 @@
+module.exports = {
+  preset: 'jest-expo',
+  setupFiles: ['<rootDir>/jest.setup.js'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.expo/'],
+  collectCoverageFrom: ['src/core/**/*.ts'],
+};
