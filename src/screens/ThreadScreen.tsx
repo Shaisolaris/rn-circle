@@ -21,6 +21,11 @@ import type { RootScreenProps } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme/ThemeContext';
 
+// Stable fallback: an inline `?? []` inside the selector would hand zustand v5
+// a new reference on every read, which useSyncExternalStore treats as an
+// endless stream of store changes.
+const NO_COMMENTS: CommentNode[] = [];
+
 export function ThreadScreen({ route }: RootScreenProps<'Thread'>) {
   const { postId } = route.params;
   const theme = useTheme();
@@ -29,7 +34,7 @@ export function ThreadScreen({ route }: RootScreenProps<'Thread'>) {
 
   const post = useAppStore((state) => state.posts.find((item) => item.id === postId));
   const users = useAppStore((state) => state.users);
-  const commentTree = useAppStore((state) => state.comments[postId] ?? []);
+  const commentTree = useAppStore((state) => state.comments[postId] ?? NO_COMMENTS);
   const toggleLike = useAppStore((state) => state.toggleLike);
   const addComment = useAppStore((state) => state.addComment);
 

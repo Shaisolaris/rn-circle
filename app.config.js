@@ -32,10 +32,11 @@ const config = {
   web: {
     favicon: './assets/favicon.png',
     bundler: 'metro',
+    output: 'single',
     backgroundColor: '#0B1220',
   },
   experiments: {
-    baseUrl: basePath,
+    baseUrl: basePath || undefined,
   },
   extra: {
     basePath,

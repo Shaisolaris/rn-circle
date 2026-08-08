@@ -4,6 +4,7 @@
  * pure ranking / counting functions, so screens never have to duplicate
  * that wiring.
  */
+import { useShallow } from 'zustand/shallow';
 import { countComments } from '../core/counts';
 import { postsForAuthor, postsForGroup, rankPosts } from '../core/feed';
 import type { CommentNode, Post } from '../core/types';
@@ -21,27 +22,40 @@ export function useCommentCount(postId: string): number {
   return useAppStore((state) => countComments(state.comments[postId] ?? []));
 }
 
+/**
+ * These selectors build a fresh array on every store read, so they must be
+ * wrapped in `useShallow`: zustand v5 feeds the selector result straight into
+ * React's `useSyncExternalStore`, which treats every new reference as a store
+ * change and re-renders forever without it.
+ */
+
 /** The main feed: every post, ranked by recency + engagement. */
 export function useRankedFeed(): Post[] {
-  return useAppStore((state) => {
-    const counts = commentCountsFor(state.posts, state.comments);
-    return rankPosts(state.posts, counts, Date.now());
-  });
+  return useAppStore(
+    useShallow((state) => {
+      const counts = commentCountsFor(state.posts, state.comments);
+      return rankPosts(state.posts, counts, Date.now());
+    })
+  );
 }
 
 /** A single group's feed, ranked the same way as the main feed. */
 export function useRankedGroupFeed(groupId: string): Post[] {
-  return useAppStore((state) => {
-    const groupPosts = postsForGroup(state.posts, groupId);
-    const counts = commentCountsFor(groupPosts, state.comments);
-    return rankPosts(groupPosts, counts, Date.now());
-  });
+  return useAppStore(
+    useShallow((state) => {
+      const groupPosts = postsForGroup(state.posts, groupId);
+      const counts = commentCountsFor(groupPosts, state.comments);
+      return rankPosts(groupPosts, counts, Date.now());
+    })
+  );
 }
 
 /** The signed-in user's own posts, newest first. */
 export function useProfilePosts(): Post[] {
-  return useAppStore((state) => {
-    const authored = postsForAuthor(state.posts, state.currentUserId);
-    return [...authored].sort((a, b) => b.createdAt - a.createdAt);
-  });
+  return useAppStore(
+    useShallow((state) => {
+      const authored = postsForAuthor(state.posts, state.currentUserId);
+      return [...authored].sort((a, b) => b.createdAt - a.createdAt);
+    })
+  );
 }
